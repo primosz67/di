@@ -3,10 +3,10 @@ package com.tahona.bus;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.tahona.commons.MultiMap;
 import com.tahona.commons.MultiMapFactory;
@@ -19,14 +19,15 @@ public class EventBus {
 	private EventBus() {
 	}
 
-	private final static HashMap<Class<? extends Event>, List<Object>> map = new HashMap<Class<? extends Event>, List<Object>>();
-	private final static HashMap<Object, Map<Class<? extends Event>, Collection<Method>>> subscriberAndMethods = new HashMap<Object, Map<Class<? extends Event>, Collection<Method>>>();
+	private final Map<Class<? extends Event>, List<Object>> map = new ConcurrentHashMap<Class<? extends Event>, List<Object>>();
+	private final Map<Object, Map<Class<? extends Event>, Collection<Method>>> subscriberAndMethods = new ConcurrentHashMap<Object, Map<Class<? extends Event>, Collection<Method>>>();
 
 	// private final HashMap<Object, List<Method>> subscriberAndMethods
 	// = new HashMap<Object, List<Method>>();
 
 	public static void subscribe(final Object subscriber) {
-		final List<Method> methods = ReflectionUtils.getMethods(subscriber, Subscribe.class);
+		final EventBus bus = getInstance();
+		final List<Method> methods = ReflectionUtils.getMethods(subscriber, Subscribe.class, true);
 		final MultiMap<Class<? extends Event>, Method> meth = MultiMapFactory.create();
 
 		for (final Method method : methods) {
@@ -37,7 +38,7 @@ public class EventBus {
 		}
 
 		final Map<Class<? extends Event>, Collection<Method>> asMap = meth.asMap();
-		subscriberAndMethods.put(subscriber, asMap);
+		bus.subscriberAndMethods.put(subscriber, asMap);
 
 		//
 		// for (Object subscriber : subscriberAndMethods.keySet()) {
@@ -72,28 +73,32 @@ public class EventBus {
 		return true;
 	}
 
-	public static void inform(final Event event) {
+	public static synchronized void inform(final Event event) {
+		EventBus bus = getInstance();
 		final boolean invoked = false;
-		final Set<Object> keySet = subscriberAndMethods.keySet();
+		final Set<Object> keySet = bus.subscriberAndMethods.keySet();
 
 		if (isRegisteredForMethods(event)) {
 			for (final Object object : keySet) {
-				final Map<Class<? extends Event>, Collection<Method>> map2 = subscriberAndMethods.get(object);
-				final Collection<Method> methodsToInvoke = map2.get(event.getClass());
+				final Map<Class<? extends Event>, Collection<Method>> map2 = bus.subscriberAndMethods.get(object);
 
-				if (methodsToInvoke != null && false == methodsToInvoke.isEmpty()) {
-					for (final Method method : methodsToInvoke) {
-						ReflectionUtils.invokeMethodWith(object, method, event);
+				if (map2 != null) {
+					final Collection<Method> methodsToInvoke = map2.get(event.getClass());
+
+					if (methodsToInvoke != null && false == methodsToInvoke.isEmpty()) {
+						for (final Method method : methodsToInvoke) {
+							ReflectionUtils.invokeMethodWith(object, method, event);
+						}
 					}
 				}
 			}
 		}
 
-		if (map.containsKey(event.getClass())) {
+		if (bus.map.containsKey(event.getClass())) {
 			// TODO method execution witn @EventAction
 
 			if (false == invoked) {
-				for (final Object subscriber : map.get(event.getClass())) {
+				for (final Object subscriber : bus.map.get(event.getClass())) {
 					if (subscriber instanceof EventSubscriber) {
 						((EventBus) subscriber).inform(event);
 					}
@@ -103,7 +108,8 @@ public class EventBus {
 	}
 
 	private static boolean isRegisteredForMethods(final Event event) {
-		final Collection<Map<Class<? extends Event>, Collection<Method>>> values = subscriberAndMethods.values();
+		final Collection<Map<Class<? extends Event>, Collection<Method>>> values = getInstance().subscriberAndMethods
+				.values();
 		for (final Map<Class<? extends Event>, Collection<Method>> map : values) {
 			if (map.containsKey(event.getClass())) {
 				return true;
@@ -118,8 +124,9 @@ public class EventBus {
 	}
 
 	public static void clear() {
-		map.clear();
-		subscriberAndMethods.clear();
+		EventBus bus = getInstance();
+		bus.map.clear();
+		bus.subscriberAndMethods.clear();
 	}
 
 }

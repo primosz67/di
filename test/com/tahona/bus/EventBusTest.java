@@ -4,10 +4,6 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.tahona.bus.Event;
-import com.tahona.bus.EventBus;
-import com.tahona.bus.Subscribe;
-
 public class EventBusTest {
 
 	@Test
@@ -17,27 +13,56 @@ public class EventBusTest {
 		MyEvent event = new MyEvent();
 		EventBus.inform(event);
 
-		Assert.assertTrue(event.isExecuted());
+		boolean condition = event.isExecuted().equals(1L);
 
+		Assert.assertTrue(condition);
+
+	}
+
+	class Cs {
+
+		@Subscribe
+		private void executeEvent(MyEvent event) {
+			event.assertTrue();
+		}
+	}
+
+	class Te extends Cs {
+		@Subscribe
+		private void executeEvent(MyEvent event) {
+			event.assertTrue();
+		}
+
+	}
+
+	@Test
+	public void testMulti() {
+		EventBus.subscribe(this);
+		EventBus.subscribe(new Te());
+
+		MyEvent event = new MyEvent();
+		EventBus.inform(event);
+
+		Assert.assertTrue(event.isExecuted() == 3);
 	}
 
 	private static class MyEvent extends Event {
 
 		private boolean executed;
+		private long i = 0;
 
-		public void assertTrue(boolean b) {
-			this.executed = b;
+		public void assertTrue() {
+			i++;
 		}
 
-		public boolean isExecuted() {
-			return executed;
+		public Long isExecuted() {
+			return this.i;
 		}
 
 	}
 
 	@Subscribe
 	private void executeEvent(MyEvent event) {
-		event.assertTrue(true);
+		event.assertTrue();
 	}
-
 }
