@@ -1,11 +1,8 @@
 package com.tahona.di;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Injector {
@@ -13,6 +10,12 @@ public class Injector {
 	private BeanContainer beanContainer;
 	private final Map<String, Class> registeredDefinition = new HashMap<String, Class>();
 
+	public Injector() {
+		for (Class iterable_element : getClasses()) {
+			register(iterable_element);
+		}
+	}
+	
 	public Map<String, Class> getRegistered() {
 		return registeredDefinition;
 	}
@@ -24,17 +27,18 @@ public class Injector {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> void injectBySelectedClass(final T bean, Class<? extends Object> rootClass) {
+	private <T> void injectBySelectedClass(final T bean,
+			Class<? extends Object> rootClass) {
 		Class supperClass = rootClass.getSuperclass();
-		
+
 		for (final Field declaredField : rootClass.getDeclaredFields()) {
 			final Class<?> propertyType = declaredField.getType();
-			
+
 			if (propertyType != null && isRegistered(propertyType)) {
 				injectField(bean, declaredField);
 			}
 		}
-		
+
 		if (supperClass != null) {
 			injectBySelectedClass(bean, supperClass);
 		}
@@ -77,7 +81,7 @@ public class Injector {
 		this.beanContainer = beanContainer;
 	}
 
-	protected void register(final Class<? extends Object> clazz) {
+	public void register(final Class<? extends Object> clazz) {
 		this.register(clazz.getName(), clazz);
 	}
 
@@ -85,4 +89,7 @@ public class Injector {
 		registeredDefinition.put(string, clazz);
 	}
 
+	public Class[] getClasses() {
+		return new Class[] {};
+	}
 }

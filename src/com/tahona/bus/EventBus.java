@@ -53,18 +53,21 @@ public class EventBus {
 		// TODO
 	}
 
-	public void subscribe(final Class<? extends Event> class1, final Object subscriber) {
-		if (false == map.containsKey(class1)) {
-			map.put(class1, new ArrayList<Object>());
+	@Deprecated
+	public static void subscribe(final Class<? extends Event> class1, final Object subscriber) {
+		final EventBus inst = getInstance();
+		
+		if (false == inst.map.containsKey(class1)) {
+			inst.map.put(class1, new ArrayList<Object>());
 		}
 
-		final List<Object> list = map.get(class1);
+		final List<Object> list = inst.map.get(class1);
 		if (notContainSubscriber(list, subscriber)) {
 			list.add(subscriber);
 		}
 	}
 
-	private boolean notContainSubscriber(final List<? extends Object> list, final Object subscriber) {
+	private static boolean notContainSubscriber(final List<? extends Object> list, final Object subscriber) {
 		for (final Object Object : list) {
 			if (Object.equals(subscriber)) {
 				return false;
@@ -74,7 +77,7 @@ public class EventBus {
 	}
 
 	public static synchronized void inform(final Event event) {
-		EventBus bus = getInstance();
+		final EventBus bus = getInstance();
 		final boolean invoked = false;
 		final Set<Object> keySet = bus.subscriberAndMethods.keySet();
 
@@ -99,8 +102,9 @@ public class EventBus {
 
 			if (false == invoked) {
 				for (final Object subscriber : bus.map.get(event.getClass())) {
-					if (subscriber instanceof EventSubscriber) {
-						((EventBus) subscriber).inform(event);
+					final boolean isInstanceOf = subscriber instanceof EventSubscriber;
+					if (isInstanceOf) {
+						((EventSubscriber) subscriber).inform(event);
 					}
 				}
 			}
@@ -124,7 +128,7 @@ public class EventBus {
 	}
 
 	public static void clear() {
-		EventBus bus = getInstance();
+		final EventBus bus = getInstance();
 		bus.map.clear();
 		bus.subscriberAndMethods.clear();
 	}
