@@ -1,5 +1,6 @@
 package com.tahona.commons;
 
+@Deprecated
 public class Preconditions {
 
 	public static void notNull(Object object, String message) {
@@ -10,6 +11,13 @@ public class Preconditions {
 
 	public static void notNull(Object object) {
 		notNull(object, "Object cannot be null!");
+	}
+
+	public static void checkFalse(Boolean falseValue) {
+		notNull(falseValue);
+		if (falseValue) {
+			throw new IllegalArgumentException("value shoud be false");
+		}
 	}
 
 }

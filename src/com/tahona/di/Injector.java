@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.tahona.di.annotation.Wire;
+
 public class Injector {
 
 	private BeanContainer beanContainer;
@@ -15,7 +17,7 @@ public class Injector {
 			register(iterable_element);
 		}
 	}
-	
+
 	public Map<String, Class> getRegistered() {
 		return registeredDefinition;
 	}
@@ -33,9 +35,15 @@ public class Injector {
 
 		for (final Field declaredField : rootClass.getDeclaredFields()) {
 			final Class<?> propertyType = declaredField.getType();
+			Wire wireAnnotation = declaredField.getAnnotation(Wire.class);
 
-			if (propertyType != null && isRegistered(propertyType)) {
-				injectField(bean, declaredField);
+			if (propertyType != null && wireAnnotation != null) {
+				if (!wireAnnotation.name().isEmpty()) {
+					injectField(bean, declaredField, wireAnnotation.name());
+				} else if(isRegistered(propertyType)) {
+					injectField(bean, declaredField);					
+				}
+				
 			}
 		}
 
@@ -44,15 +52,22 @@ public class Injector {
 		}
 	}
 
-	private <T> void injectField(final T bean, final Field field) {
+	private <T> void injectField(final T bean, final Field field, String beanName) {
 		try {
 			boolean accessible = field.isAccessible();
 			field.setAccessible(true);
 			// checkAnnotation add in near future:D
 			// @Inject("myOwnNameBean")
 			// now its working using just Class type to find first in kind.
-			if (field.get(bean) == null) {
-				Object beanToInsert = beanContainer.getBean(field.getType());
+			
+			boolean isFieldNotSetAlready = (field.get(bean) == null);
+			if (isFieldNotSetAlready) {
+				Object beanToInsert = null; 
+				if (beanName != null) {
+					beanToInsert = beanContainer.getBean(beanName, field.getType());	
+				} else {
+					beanToInsert = beanContainer.getBean(field.getType());
+				}
 				field.set(bean, beanToInsert);
 			}
 			field.setAccessible(accessible);
@@ -64,6 +79,10 @@ public class Injector {
 		} catch (final IllegalAccessException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private <T> void injectField(final T bean, final Field field) {
+		injectField(bean, field, null);
 	}
 
 	@SuppressWarnings("unchecked")

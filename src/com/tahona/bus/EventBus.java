@@ -52,6 +52,17 @@ public class EventBus {
 
 		// TODO
 	}
+	
+	public static void unsubscribe(final Object subscriber) {
+		getInstance().subscriberAndMethods.remove(subscriber);
+		
+		Map<Class<? extends Event>, List<Object>> eventsMap = getInstance().map;
+		for (Class<? extends Event> eventClass : eventsMap.keySet()) {
+			List<Object> list = eventsMap.get(eventClass);
+			list.remove(subscriber);
+		}
+	}
+	
 
 	@Deprecated
 	public static void subscribe(final Class<? extends Event> class1, final Object subscriber) {
@@ -78,7 +89,7 @@ public class EventBus {
 
 	public static synchronized void inform(final Event event) {
 		final EventBus bus = getInstance();
-		final boolean invoked = false;
+		boolean invoked = false;
 		final Set<Object> keySet = bus.subscriberAndMethods.keySet();
 
 		if (isRegisteredForMethods(event)) {
@@ -91,16 +102,16 @@ public class EventBus {
 					if (methodsToInvoke != null && false == methodsToInvoke.isEmpty()) {
 						for (final Method method : methodsToInvoke) {
 							ReflectionUtils.invokeMethodWith(object, method, event);
+							invoked = true;
 						}
 					}
 				}
 			}
 		}
-
-		if (bus.map.containsKey(event.getClass())) {
-			// TODO method execution witn @EventAction
-
-			if (false == invoked) {
+//		if (false == invoked) {
+			if (bus.map.containsKey(event.getClass())) {
+				// TODO method execution witn @EventAction
+			
 				for (final Object subscriber : bus.map.get(event.getClass())) {
 					final boolean isInstanceOf = subscriber instanceof EventSubscriber;
 					if (isInstanceOf) {
@@ -108,7 +119,7 @@ public class EventBus {
 					}
 				}
 			}
-		}
+//		}
 	}
 
 	private static boolean isRegisteredForMethods(final Event event) {

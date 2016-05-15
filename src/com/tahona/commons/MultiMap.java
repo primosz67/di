@@ -37,4 +37,10 @@ public class MultiMap<T1, T2> {
 		map.clear();
 	}
 
+	public void putAll(T1 key, List<T2> values) {
+		for (T2 t2 : values) {
+			put(key, t2);
+		}
+	}
+
 }

@@ -119,10 +119,10 @@ public class BeanContainer {
 	 *  	but will be injected by Injector in future injections.
 	 *  	- getBean also will work;
 	 *  
+	 * @param final String providedBeanName - name to replace
 	 * @param bean Object
 	 */
-	public void replaceBean(final Object bean) {
-		final String providedBeanName = helper.provideBeanName(bean);
+	public void replaceBean(final String providedBeanName, final Object bean) {
 		final Object initializedBean = this.getBean(providedBeanName);
 		
 		if (initializedBean == null && helper.isNotContainType(beanList, bean.getClass())) {
@@ -141,6 +141,10 @@ public class BeanContainer {
 		}
 	}
 	
+	public void replaceBean(final Object bean) {
+		final String providedBeanName = helper.provideBeanName(bean);
+		replaceBean(providedBeanName, bean);
+	}
 
 	public Injector getInjector() {
 		return injector;

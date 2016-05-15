@@ -8,5 +8,6 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Wire {
-
+	//TODO
+	public String name() default "";
 }
