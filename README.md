@@ -29,7 +29,7 @@ class UserService {
 
 
 
-###Init annotation
+### @Init annotation
 Method executed after bean injection. 
 ```java
   class UserService {
