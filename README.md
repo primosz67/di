@@ -1,33 +1,42 @@
 # DI
+Simple Automatic dependency injection.
 
+##Basic use:
 
-
-
-How to use: 
-
-#Basic use:
-
-class UserService {
-  @Wire private ConnectionService connectionService;
-  
-  @Init
-  private init () {
-      connectionService.prepareForConnection();
-  }
-  //...
-}
-
+###Container initialization
+```java
 //Create Injector:
-    final Injector injector = new Injector();
+	final Injector injector = new Injector();
 
 //Register beans
-		injector.register(AnnotationScopeLocalBean.class);
-		injector.register(UserService.class);
-		injector.register(ClientService.class);
-		injector.register(ConnectionService.class);
+	injector.register(AnnotationScopeLocalBean.class);
+	injector.register(UserService.class);
+	injector.register(ClientService.class);
+	injector.register(ConnectionService.class);
 		
-		final BeanContainer beanContainer = new BeanContainer(injector);
-		beanContainer.initialize();
-		
-		
-		
+	final BeanContainer beanContainer = new BeanContainer(injector);
+	beanContainer.initialize();
+
+```
+### @Wire annotation
+
+``` java
+class UserService {
+  @Wire private ConnectionService connectionService;
+  //...
+}
+```
+
+
+
+###Init annotation
+Method executed after bean injection. 
+```java
+  class UserService {
+ 	@Wire private ConnectionService connectionService;
+  	@Init
+  	private init () {
+      		connectionService.prepareForConnection();
+  	}
+}
+```		
