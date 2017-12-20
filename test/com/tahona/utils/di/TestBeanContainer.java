@@ -1,20 +1,23 @@
-package com.tahona.di;
+package com.tahona.utils.di;
 
-import com.tahona.utils.di.*;
-import com.tahona.utils.di.annotation.Wire;
 import junit.framework.TestCase;
 
 import org.junit.Test;
 
+import com.tahona.utils.di.Bean;
+import com.tahona.utils.di.BeanContainer;
+import com.tahona.utils.di.BeanScope;
+import com.tahona.utils.di.Init;
+import com.tahona.utils.di.Injector;
+import com.tahona.utils.di.annotation.Wire;
 
 public class TestBeanContainer extends TestCase {
 
 	static class InnerTestBean {
 	}
 
-	static class RootTestBean {
-		@Wire
-		private TestBean innerBean;
+	private static class RootTestBean {
+		@Wire private TestBean innerBean;
 	}
 
 	static class TestBean {
@@ -24,15 +27,15 @@ public class TestBeanContainer extends TestCase {
 
 	public void testBeanCreation() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(TestBean.class);
 
 		// w
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// t
-		TestBean bean = beanContainer.getBean(TestBean.class);
+		final TestBean bean = beanContainer.getBean(TestBean.class);
 
 		assertNotNull(bean);
 		assertNull(bean.innerBean);
@@ -40,16 +43,16 @@ public class TestBeanContainer extends TestCase {
 
 	public void testSecondLevelBeanCreation() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(TestBean.class);
 		injector.register(InnerTestBean.class);
 
 		// w
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// t
-		TestBean bean = beanContainer.getBean(TestBean.class);
+		final TestBean bean = beanContainer.getBean(TestBean.class);
 
 		assertNotNull(bean);
 		assertTrue(bean.innerBean instanceof InnerTestBean);
@@ -59,17 +62,17 @@ public class TestBeanContainer extends TestCase {
 
 	public void testThirdLevelBeanCreation() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(TestBean.class);
 		injector.register(InnerTestBean.class);
 		injector.register(RootTestBean.class);
 
 		// w
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// t
-		RootTestBean bean = beanContainer.getBean(RootTestBean.class);
+		final RootTestBean bean = beanContainer.getBean(RootTestBean.class);
 
 		assertNotNull(bean);
 		assertTrue(bean.innerBean.innerBean instanceof InnerTestBean);
@@ -83,15 +86,15 @@ public class TestBeanContainer extends TestCase {
 
 	public void testLoopBeanCreation() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(LoopTestBean.class);
 
 		// w
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// t
-		LoopTestBean bean = beanContainer.getBean(LoopTestBean.class);
+		final LoopTestBean bean = beanContainer.getBean(LoopTestBean.class);
 
 		assertNotNull(bean);
 		assertNotNull(bean.child.child);
@@ -100,15 +103,15 @@ public class TestBeanContainer extends TestCase {
 
 	public void testSimpleInjectBean() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(InnerTestBean.class);
 
 		// w
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// t
-		TestBean bean = injector.inject(new TestBean());
+		final TestBean bean = injector.inject(new TestBean());
 
 		assertNotNull(bean);
 		assertNotNull(bean.innerBean);
@@ -116,16 +119,16 @@ public class TestBeanContainer extends TestCase {
 
 	public void testRegisterByName() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register("InnerTestName", InnerTestBean.class);
 		injector.register("Bean", TestBean.class);
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// w
-		TestBean bean = (TestBean) beanContainer.getBean("Bean");
-		TestBean bean2 = beanContainer.getBean("Bean", TestBean.class);
+		final TestBean bean = (TestBean) beanContainer.getBean("Bean");
+		final TestBean bean2 = beanContainer.getBean("Bean", TestBean.class);
 
 		// t
 		assertNotNull(bean);
@@ -140,11 +143,11 @@ public class TestBeanContainer extends TestCase {
 
 	public void testAddInitializedBean() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register("InnerTestName", InnerTestBean.class);
 		injector.register(C1.class);
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 
 		// w
 		beanContainer.addBean(new TestBean());
@@ -152,8 +155,8 @@ public class TestBeanContainer extends TestCase {
 		beanContainer.initialize();
 
 		// t
-		TestBean bean = (TestBean) beanContainer.getBean("Bean");
-		TestBean bean2 = beanContainer.getBean(TestBean.class);
+		final TestBean bean = (TestBean) beanContainer.getBean("Bean");
+		final TestBean bean2 = beanContainer.getBean(TestBean.class);
 
 		assertNotNull(bean);
 		assertNotNull(bean.innerBean);
@@ -162,7 +165,7 @@ public class TestBeanContainer extends TestCase {
 		assertNotNull(beanContainer.getBean(C1.class).tBean);
 	}
 
-	static class AnnotatedBean {
+	private static class AnnotatedBean {
 		private boolean test = false;
 
 		@Init
@@ -173,14 +176,14 @@ public class TestBeanContainer extends TestCase {
 
 	public void testInitAnnotationOnBean() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register("InnerTestName", AnnotatedBean.class);
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// w
-		AnnotatedBean bean = beanContainer.getBean(AnnotatedBean.class);
+		final AnnotatedBean bean = beanContainer.getBean(AnnotatedBean.class);
 
 		// t
 		assertNotNull(bean);
@@ -189,27 +192,30 @@ public class TestBeanContainer extends TestCase {
 
 	public void testReplaceBean() {
 		// g
-		Injector injector = new Injector();
-		injector.register("InnerTestName", TestBean.class);
-		injector.register(RootTestBean.class);
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final Injector injector = new Injector();
+		injector.register("InnerTestName", TestBean.class); // A
+		injector.register(RootTestBean.class);// B
+
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
-		RootTestBean newA = new RootTestBean();
-		TestBean testBean = new TestBean();
+		//new A
+		final RootTestBean newA = new RootTestBean();
+		final TestBean testBean = new TestBean();
 		newA.innerBean = testBean;
 		newA.innerBean.test = "Nowy Inner Bean";
 
-		TestBean newB = new TestBean();
+		//newB
+		final TestBean newB = new TestBean();
 		newB.test = "Replaced Bean";
 
 		// w
 		beanContainer.replaceBean(newA);
-		beanContainer.replaceBean(newB);
+		beanContainer.replaceBean("InnerTestName", newB);
 
 		// t
-		RootTestBean root = beanContainer.getBean(RootTestBean.class);
-		TestBean bean = beanContainer.getBean(TestBean.class);
+		final RootTestBean root = beanContainer.getBean(RootTestBean.class);
+		final TestBean bean = beanContainer.getBean(TestBean.class);
 
 		assertNotNull(root);
 		assertEquals("Nowy Inner Bean", root.innerBean.test);
@@ -221,14 +227,14 @@ public class TestBeanContainer extends TestCase {
 
 	public void testReplaceBeanByName() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register("InnerTestName", TestBean.class);
 		injector.register(RootTestBean.class);
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
-		RootTestBean newA = new RootTestBean();
+		final RootTestBean newA = new RootTestBean();
 		newA.innerBean = new TestBean();
 		newA.innerBean.test = "Nowy Inner Bean";
 
@@ -236,7 +242,7 @@ public class TestBeanContainer extends TestCase {
 		beanContainer.replaceBean(newA);
 
 		// t
-		RootTestBean root = beanContainer.getBean(RootTestBean.class);
+		final RootTestBean root = beanContainer.getBean(RootTestBean.class);
 
 		assertNotNull(root);
 		assertEquals("Nowy Inner Bean", root.innerBean.test);
@@ -252,18 +258,18 @@ public class TestBeanContainer extends TestCase {
 
 	public void testAnnotationScopeLocalBean() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(AnnotationScopeLocalBean.class);
 		injector.register(TestBean.class);
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// w
-		AnnotationScopeLocalBean xz = beanContainer.getBean(AnnotationScopeLocalBean.class);
+		final AnnotationScopeLocalBean xz = beanContainer.getBean(AnnotationScopeLocalBean.class);
 		xz.test = "inny text";
 
 		// t
-		AnnotationScopeLocalBean root = beanContainer.getBean(AnnotationScopeLocalBean.class);
+		final AnnotationScopeLocalBean root = beanContainer.getBean(AnnotationScopeLocalBean.class);
 
 		assertNotNull(root);
 		assertNotNull(root.bean);
@@ -276,31 +282,31 @@ public class TestBeanContainer extends TestCase {
 		@Wire TestInterface interfacel;
 	}
 
-	static class Test2LEvelIheritance extends TestIheritance {
+	private static class Test2LEvelIheritance extends TestIheritance {
 	}
 
 	interface TestInterface {
 
 	}
 
-	static class TestInterfaceClass implements TestInterface {
+	private static class TestInterfaceClass implements TestInterface {
 
 	}
 
 	public void testInheritanceBean() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(AnnotationScopeLocalBean.class);
 		injector.register(InnerTestBean.class);
 		injector.register(TestInterfaceClass.class);
 		// injector.register(TestBean.class);
 		injector.register(TestIheritance.class);
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// w
-		TestIheritance root = beanContainer.getBean(TestIheritance.class);
+		final TestIheritance root = beanContainer.getBean(TestIheritance.class);
 
 		// t
 
@@ -313,17 +319,17 @@ public class TestBeanContainer extends TestCase {
 
 	public void testInheritanceSecondLevelBean() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(AnnotationScopeLocalBean.class);
 		injector.register(InnerTestBean.class);
 		// injector.register(TestBean.class);
 		injector.register(Test2LEvelIheritance.class);
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// w
-		Test2LEvelIheritance root = beanContainer.getBean(Test2LEvelIheritance.class);
+		final Test2LEvelIheritance root = beanContainer.getBean(Test2LEvelIheritance.class);
 
 		// t
 		assertNotNull(root);
@@ -339,15 +345,15 @@ public class TestBeanContainer extends TestCase {
 	
 	public void testShouldNotInjectWithoutWireAnnotation() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(WithoutWireBean.class);
 		injector.register(TestBean.class);
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// w
-		WithoutWireBean root = beanContainer.getBean(WithoutWireBean.class);
+		final WithoutWireBean root = beanContainer.getBean(WithoutWireBean.class);
 
 		// t
 		assertNotNull(root);
@@ -361,18 +367,18 @@ public class TestBeanContainer extends TestCase {
 	}
 	public void testShouldWireByBeanByName() {
 		// g
-		Injector injector = new Injector();
+		final Injector injector = new Injector();
 		injector.register(WithoutWireBean.class);
 		injector.register(TestBean.class);
 		injector.register("test", TestIheritance.class);		
 		injector.register(TestBean.class);
 		
 
-		BeanContainer beanContainer = new BeanContainer(injector);
+		final BeanContainer beanContainer = new BeanContainer(injector);
 		beanContainer.initialize();
 
 		// w
-		WithoutWireBean root = beanContainer.getBean(WithoutWireBean.class);
+		final WithoutWireBean root = beanContainer.getBean(WithoutWireBean.class);
 
 		// t
 		assertNotNull(root);

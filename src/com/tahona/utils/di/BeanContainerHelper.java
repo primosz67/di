@@ -35,7 +35,7 @@ public class BeanContainerHelper {
 
 	public Object createObject(final Class class1) {
 		try {
-			return class1.newInstance();
+			return ReflectionUtils.newInstance(class1);
 		} catch (final Exception e) {
 			throw new CreateInstanceException("Cannot create new Instance of class " + class1.getSimpleName() + " !", e);
 		}

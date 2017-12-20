@@ -104,11 +104,11 @@ public class Injector {
 		this.register(clazz.getName(), clazz);
 	}
 
-	protected void register(final String string, final Class clazz) {
+	public void register(final String string, final Class clazz) {
 		registeredDefinition.put(string, clazz);
 	}
 
-	public Class[] getClasses() {
+	private Class[] getClasses() {
 		return new Class[] {};
 	}
 }

@@ -1,5 +1,7 @@
 package com.tahona.utils.di;
 
+import sun.reflect.Reflection;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -34,13 +36,13 @@ public final class ReflectionUtils {
 		return getMethods(bean, annotationClass, false);
 	}
 
-	public static List<Method> getMethods(final Object bean, final Class annotationClass, boolean searchInInnerClasses) {
-		Class<? extends Object> beanClass = bean.getClass();
+	public static List<Method> getMethods(final Object bean, final Class annotationClass, final boolean searchInInnerClasses) {
+		final Class<? extends Object> beanClass = bean.getClass();
 		return getMethods(bean, beanClass, annotationClass, searchInInnerClasses);
 	}
 
-	private static List<Method> getMethods(final Object bean, Class<? extends Object> beanClass,
-			final Class annotationClass, boolean searchInInnerClasses) {
+	private static List<Method> getMethods(final Object bean, final Class<? extends Object> beanClass,
+										   final Class annotationClass, final boolean searchInInnerClasses) {
 		final Method[] methods = beanClass.getDeclaredMethods();
 
 		final List<Method> methodsList = new ArrayList<Method>();
@@ -51,7 +53,7 @@ public final class ReflectionUtils {
 				methodsList.add(method);
 			}
 		}
-		Class<?> superclass = beanClass.getSuperclass();
+		final Class<?> superclass = beanClass.getSuperclass();
 		if (searchInInnerClasses && false == superclass.isAssignableFrom(Object.class)) {
 			methodsList.addAll(getMethods(bean, superclass, annotationClass, searchInInnerClasses));
 		}
@@ -59,7 +61,7 @@ public final class ReflectionUtils {
 		return methodsList;
 	}
 
-	public static void invokeMethodWith(Object bean, Method method, Object... objects) {
+	public static void invokeMethodWith(final Object bean, final Method method, final Object... objects) {
 		method.setAccessible(true);
 
 		try {
@@ -73,32 +75,56 @@ public final class ReflectionUtils {
 		}
 	}
 
-	public static <T> T newInstance(Class sc, Class[] cls, Object... obj) {
+	public static <T> T newInstance(final Class sc, final Class[] cls, final Object... obj) {
 		try {
 			
-			Constructor constructor;
+			final Constructor constructor;
 			constructor = sc.getDeclaredConstructor(cls);
 			return (T) constructor.newInstance(obj);
-		} catch (SecurityException e) {
+		} catch (final SecurityException e) {
 			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
+		} catch (final NoSuchMethodException e) {
 			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			e.printStackTrace();
-		} catch (InstantiationException e) {
+		} catch (final InstantiationException e) {
 			e.printStackTrace();
-		} catch (IllegalAccessException e) {
+		} catch (final IllegalAccessException e) {
 			e.printStackTrace();
-		} catch (InvocationTargetException e) {
+		} catch (final InvocationTargetException e) {
 			e.printStackTrace();
 		}
 
 		throw new IllegalStateException("Something went wrong");
 	}
 
-	private static Class[] getTypes(Object[] obj) {
-		Set<Class> c = new HashSet<Class>();
-		for (Object object : obj) {
+
+	public static <T> T newInstance(final Class sc) {
+		try {
+
+			final Constructor constructor = sc.getDeclaredConstructor(null);
+			constructor.setAccessible(true);
+			return (T) constructor.newInstance();
+		} catch (final SecurityException e) {
+			e.printStackTrace();
+		} catch (final NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (final IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (final InstantiationException e) {
+			e.printStackTrace();
+		} catch (final IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (final InvocationTargetException e) {
+			e.printStackTrace();
+		}
+
+		throw new IllegalStateException("Something went wrong");
+	}
+
+	private static Class[] getTypes(final Object[] obj) {
+		final Set<Class> c = new HashSet<Class>();
+		for (final Object object : obj) {
 			c.add(object.getClass());
 		}
 		return c.toArray(new Class[] {});
