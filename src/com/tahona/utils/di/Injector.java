@@ -1,11 +1,11 @@
-package com.tahona.di;
+package com.tahona.utils.di;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.tahona.di.annotation.Wire;
+import com.tahona.utils.di.annotation.Wire;
 
 public class Injector {
 

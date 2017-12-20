@@ -1,4 +1,4 @@
-package com.tahona.di;
+package com.tahona.utils.di;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,4 +1,4 @@
-package com.tahona.di;
+package com.tahona.utils.di;
 
 public enum BeanScope {
 	SINGLETON, LOCAL

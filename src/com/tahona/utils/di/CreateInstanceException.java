@@ -1,4 +1,4 @@
-package com.tahona.di;
+package com.tahona.utils.di;
 
 public class CreateInstanceException extends RuntimeException {
 

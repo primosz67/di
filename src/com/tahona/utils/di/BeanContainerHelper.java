@@ -1,4 +1,4 @@
-package com.tahona.di;
+package com.tahona.utils.di;
 
 import java.util.Map;
 
@@ -59,13 +59,13 @@ public class BeanContainerHelper {
 		return beanName;
 	}
 
-	public boolean isContainType(final Map<String, Object> beanList, final Class<? extends Object> class1) {
+	public boolean hastType(final Map<String, Object> beanList, final Class<? extends Object> class1) {
 		final Object findByType = findByType(beanList, class1);
 		return findByType != null;
 	}
 
-	public boolean isNotContainType(final Map<String, Object> beanList, final Class<? extends Object> class1) {
-		return false == this.isContainType(beanList, class1);
+	public boolean hasNotType(final Class<? extends Object> class1, final Map<String, Object> beanList) {
+		return !this.hastType(beanList, class1);
 	}
 
 	public Object findBean(final Map<String, Object> beanList, final String beanName) {

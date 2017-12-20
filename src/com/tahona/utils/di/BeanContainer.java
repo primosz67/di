@@ -1,4 +1,4 @@
-package com.tahona.di;
+package com.tahona.utils.di;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -88,7 +88,7 @@ public class BeanContainer {
 	}
 
 	public Object getBean(final String beanName) {
-		if (beanList.containsKey(beanName) ) {
+		if (beanName != null && beanList.containsKey(beanName) ) {
 			Object object = beanList.get(beanName);
 			Class<? extends Object> class1 = object.getClass();
 			if (helper.isLocal(class1)) {
@@ -122,28 +122,24 @@ public class BeanContainer {
 	 * @param final String providedBeanName - name to replace
 	 * @param bean Object
 	 */
-	public void replaceBean(final String providedBeanName, final Object bean) {
-		final Object initializedBean = this.getBean(providedBeanName);
-		
-		if (initializedBean == null && helper.isNotContainType(beanList, bean.getClass())) {
-
-			addBean(bean);
-			final HashSet<String> registeredBeansKey = new HashSet<String>();
-			registeredBeansKey.add(providedBeanName);
-			updateInjectorRegistry(registeredBeansKey, injector);
-
-		} else if (initializedBean == null) {
-			String beanName = helper.getBeanName(beanList, bean);
-			beanList.put(beanName, bean);
-
+	public void replaceBean(String providedBeanName, final Object bean) {
+		final  Object initializedBean = this.getBean(providedBeanName);
+		if (initializedBean == null && helper.hasNotType(bean.getClass(), beanList)) {
+			addAndRegisterNewBean(providedBeanName, bean);
 		} else {
 			beanList.put(providedBeanName, bean);
 		}
 	}
-	
+
+	private void addAndRegisterNewBean(String providedBeanName, Object bean) {
+		addBean(providedBeanName, bean);
+		final HashSet<String> registeredBeansKey = new HashSet<String>();
+		registeredBeansKey.add(providedBeanName);
+		updateInjectorRegistry(registeredBeansKey, injector);
+	}
+
 	public void replaceBean(final Object bean) {
-		final String providedBeanName = helper.provideBeanName(bean);
-		replaceBean(providedBeanName, bean);
+		replaceBean(helper.provideBeanName(bean), bean);
 	}
 
 	public Injector getInjector() {
