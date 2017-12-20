@@ -1,153 +1,210 @@
 package com.tahona.utils.di;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Constructor;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Dependency injection
- * @author primosz67
  *
+ * @author primosz67
  */
 public class BeanContainer {
 
-	private BeanContainerHelper helper = new BeanContainerHelper();
+    private BeanContainerHelper helper = new BeanContainerHelper();
 
-	private final Map<String, Object> beanList = new ConcurrentHashMap<String, Object>();
+    private final Map<String, Object> beanList = new ConcurrentHashMap<String, Object>();
 
-	private final Injector injector;
-	private boolean initialized;
+    private final Injector injector;
+    private boolean initialized;
 
-	public BeanContainer(final Injector injector) {
-		this.injector = injector;
-		injector.setContainer(this);
-	}
-	
-	public void initialize() {
-		if (initialized) {
-			throw new UnsupportedOperationException("Cannot initialize two times!");
-		}
-		initialized = true;
+    public BeanContainer(final Injector injector) {
+        this.injector = injector;
+        injector.setContainer(this);
+    }
 
-		final Map<String, Class> registered = injector.getRegistered();
-		createBeans(registered);
-		injectAllBean(injector);
-		runInitAnnotation();
-	}
+    public void initialize() {
+        if (initialized) {
+            throw new UnsupportedOperationException("Cannot initialize two times!");
+        }
+        initialized = true;
 
-	private void injectAllBean(final Injector injector) {
-		for (final Object bean : beanList.values()) {
-			injector.inject(bean);
-		}
-	}
+        initNoConstructorBeans();
+        initParametrizedConstructorBeans();
+        updateInjectorRegistry(beanList.keySet(), injector);
+        injectAllBean(injector);
+        runInitAnnotation();
+    }
 
-	private void createBeans(final Map<String, Class> registered) {
+    private void initParametrizedConstructorBeans() {
+        final Map<String, Class> all = injector.getRegistered();
 
-		// addedBean
-		final Set<String> registeredBeansKey = new HashSet<String>(beanList.keySet());
+        final List<BeanCreator> creatorsList = all.entrySet().stream()
+                .filter(predicateNoConstruct().negate())
+                .map(x -> new BeanCreator(x.getKey(), x.getValue(), getConstructorBeans(x.getValue())))
+                .collect(Collectors.toList());
 
-		for (final String key : registered.keySet()) {
-			final Object object = helper.createObject(registered.get(key));
-			addBean(key, object);
-		}
+        final Map<Class, BeanCreator> creatorMap = new HashMap<>();
+        creatorsList.forEach(creator -> {
+            final List<Class<?>> clazz = Arrays.asList(creator.getConstructorBeans());
+            clazz.forEach(c -> {
+                creatorMap.put(c, creator);
+            });
+        });
 
-		// updateAddedBean
-		updateInjectorRegistry(registeredBeansKey, injector);
-	}
+        creatorsList.forEach(c -> addBeanByCreator(creatorMap, c));
 
-	private void updateInjectorRegistry(final Set<String> registeredBeansKey, final Injector injectRegistry) {
-		for (final String addedBeanName : registeredBeansKey) {
-			injectRegistry.register(addedBeanName, beanList.get(addedBeanName).getClass());
-		}
-	}
+    }
 
-	public void addBean(final String key, final Object object) {
-		if (beanList.containsKey(key)) {
-			throw new IllegalArgumentException("Bean with name " + key + " allready registered");
-		}
-		beanList.put(key, object);
-	}
+    private void addBeanByCreator(final Map<Class, BeanCreator> creatorMap , final BeanCreator c) {
+        if (!c.isCreated()) {
 
-	@SuppressWarnings("unchecked")
-	public <T> T getBean(final String name, final Class<T> clazz) {
-		Object bean = this.getBean(name);
-		if (bean == null) {
-			bean = this.getBean(clazz);
-		} 
-		return (T) bean;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public <T> T getBean(final Class<T> clazz) {
-		if (helper.isLocal(clazz)) {
-			return (T) injector.inject(helper.createObject(clazz));
-		} else {
-			return helper.findByType(beanList, clazz);
-		}
-	}
+            final List<Class<?>> clazz = Arrays.asList(c.getConstructorBeans());
+            final List<Object> beans = clazz.stream()
+                    .map(this::getBean)
+                    .filter(x -> x != null)
+                    .collect(Collectors.toList());
 
-	public Object getBean(final String beanName) {
-		if (beanName != null && beanList.containsKey(beanName) ) {
-			Object object = beanList.get(beanName);
-			Class<? extends Object> class1 = object.getClass();
-			if (helper.isLocal(class1)) {
-				return injector.inject(helper.createObject(class1));
-			} else {
-				return beanList.get(beanName);
-			}
-			
-		} else {
-			return null;
-		}
-	}
+            final Object o = c.create(beans);
+            if (o != null) {
+                addBean(c.getBeanName(), o);
+                final BeanCreator toInject = creatorMap.get(c.getClass());
 
-	public void addBean(final Object obj) {
-		this.addBean(helper.provideBeanName(obj), obj);
-	}
+                if (toInject != null) {
+                    addBeanByCreator(creatorMap, toInject);
+                }
+            }
+        }
+    }
 
-	private void runInitAnnotation() {
-		for (final Object bean : beanList.values()) {
-			ReflectionUtils.invokeMethodWith(bean, Init.class);
-		}
-	}
+    private Class<?>[] getConstructorBeans(final Class value) {
+        final Constructor constructor = value.getDeclaredConstructors()[0];
+        return constructor.getParameterTypes();
+    }
 
-	/**
-	 *  Add bean to container or replace, with registering in injector.
-	 *  
-	 *  Note: the object will not be auto injected to already initialized beans, 
-	 *  	but will be injected by Injector in future injections.
-	 *  	- getBean also will work;
-	 *  
-	 * @param final String providedBeanName - name to replace
-	 * @param bean Object
-	 */
-	public void replaceBean(String providedBeanName, final Object bean) {
-		final  Object initializedBean = this.getBean(providedBeanName);
-		if (initializedBean == null && helper.hasNotType(bean.getClass(), beanList)) {
-			addAndRegisterNewBean(providedBeanName, bean);
-		} else {
-			beanList.put(providedBeanName, bean);
-		}
-	}
+    private Predicate<Map.Entry<String, Class>> predicateNoConstruct() {
+        return x -> {
+            try {
+                x.getValue().getDeclaredConstructor(null);
+                return true;
+            } catch (final NoSuchMethodException e) {
+                return false;
+            }
+        };
+    }
 
-	private void addAndRegisterNewBean(String providedBeanName, Object bean) {
-		addBean(providedBeanName, bean);
-		final HashSet<String> registeredBeansKey = new HashSet<String>();
-		registeredBeansKey.add(providedBeanName);
-		updateInjectorRegistry(registeredBeansKey, injector);
-	}
+    private void injectAllBean(final Injector injector) {
+        for (final Object bean : beanList.values()) {
+            injector.inject(bean);
+        }
+    }
 
-	public void replaceBean(final Object bean) {
-		replaceBean(helper.provideBeanName(bean), bean);
-	}
+    private void initNoConstructorBeans() {
+        final Map<String, Class> all = injector.getRegistered();
+        final Map<String, Class> registered = all.entrySet().stream()
+                .filter(predicateNoConstruct())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-	public Injector getInjector() {
-		return injector;
-	}
+        for (final String key : registered.keySet()) {
+            final Object object = helper.createObject(registered.get(key));
+            addBean(key, object);
+        }
+    }
 
-	public void clear() {
-		beanList.clear();
-		injector.getRegistered().clear();
-	}
+    private void updateInjectorRegistry(final Set<String> registeredBeansKey, final Injector injectRegistry) {
+        for (final String addedBeanName : registeredBeansKey) {
+            injectRegistry.register(addedBeanName, beanList.get(addedBeanName).getClass());
+        }
+    }
+
+    public void addBean(final String key, final Object object) {
+        if (beanList.containsKey(key)) {
+            throw new IllegalArgumentException("Bean with name " + key + " already registered");
+        }
+        beanList.put(key, object);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getBean(final String name, final Class<T> clazz) {
+        Object bean = this.getBean(name);
+        if (bean == null) {
+            bean = this.getBean(clazz);
+        }
+        return (T) bean;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getBean(final Class<T> clazz) {
+        if (helper.isLocal(clazz)) {
+            return (T) injector.inject(helper.createObject(clazz));
+        } else {
+            return helper.findByType(beanList, clazz);
+        }
+    }
+
+    public Object getBean(final String beanName) {
+        if (beanName != null && beanList.containsKey(beanName)) {
+            final Object object = beanList.get(beanName);
+            final Class<? extends Object> class1 = object.getClass();
+            if (helper.isLocal(class1)) {
+                return injector.inject(helper.createObject(class1));
+            } else {
+                return beanList.get(beanName);
+            }
+
+        } else {
+            return null;
+        }
+    }
+
+    public void addBean(final Object obj) {
+        this.addBean(helper.provideBeanName(obj), obj);
+    }
+
+    private void runInitAnnotation() {
+        for (final Object bean : beanList.values()) {
+            ReflectionUtils.invokeMethodWith(bean, Init.class);
+        }
+    }
+
+    /**
+     * Add bean to container or replace, with registering in injector.
+     * <p>
+     * Note: the object will not be auto injected to already initialized beans,
+     * but will be injected by Injector in future injections.
+     * - getBean also will work;
+     *
+     * @param final String providedBeanName - name to replace
+     * @param bean  Object
+     */
+    public void replaceBean(final String providedBeanName, final Object bean) {
+        final Object initializedBean = this.getBean(providedBeanName);
+        if (initializedBean == null && helper.hasNotType(bean.getClass(), beanList)) {
+            addAndRegisterNewBean(providedBeanName, bean);
+        } else {
+            beanList.put(providedBeanName, bean);
+        }
+    }
+
+    private void addAndRegisterNewBean(final String providedBeanName, final Object bean) {
+        addBean(providedBeanName, bean);
+        final HashSet<String> registeredBeansKey = new HashSet<String>();
+        registeredBeansKey.add(providedBeanName);
+        updateInjectorRegistry(registeredBeansKey, injector);
+    }
+
+    public void replaceBean(final Object bean) {
+        replaceBean(helper.provideBeanName(bean), bean);
+    }
+
+    public Injector getInjector() {
+        return injector;
+    }
+
+    public void clear() {
+        beanList.clear();
+        injector.getRegistered().clear();
+    }
 }

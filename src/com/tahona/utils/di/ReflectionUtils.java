@@ -1,7 +1,5 @@
 package com.tahona.utils.di;
 
-import sun.reflect.Reflection;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -11,10 +9,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class ReflectionUtils {
+final class ReflectionUtils {
 
-	public static void invokeMethodWith(final Object bean, final Class<? extends Annotation> class1,
-			final Object... objects) {
+	static void invokeMethodWith(final Object bean, final Class<? extends Annotation> class1,
+								 final Object... objects) {
 		final Method[] methods = bean.getClass().getDeclaredMethods();
 		for (final Method method : methods) {
 			method.setAccessible(true);
@@ -36,7 +34,7 @@ public final class ReflectionUtils {
 		return getMethods(bean, annotationClass, false);
 	}
 
-	public static List<Method> getMethods(final Object bean, final Class annotationClass, final boolean searchInInnerClasses) {
+	private static List<Method> getMethods(final Object bean, final Class annotationClass, final boolean searchInInnerClasses) {
 		final Class<? extends Object> beanClass = bean.getClass();
 		return getMethods(bean, beanClass, annotationClass, searchInInnerClasses);
 	}
@@ -99,7 +97,7 @@ public final class ReflectionUtils {
 	}
 
 
-	public static <T> T newInstance(final Class sc) {
+	static <T> T newInstance(final Class sc) {
 		try {
 
 			final Constructor constructor = sc.getDeclaredConstructor(null);

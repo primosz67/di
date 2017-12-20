@@ -2,9 +2,9 @@ package com.tahona.utils.di;
 
 import java.util.Map;
 
-public class BeanContainerHelper {
+class BeanContainerHelper {
 
-	public <T> T findByType(final Map<String, Object> beanList, final Class<T> clazz) {
+	<T> T findByType(final Map<String, Object> beanList, final Class<T> clazz) {
 		for (final Object bean : beanList.values()) {
 			if (clazz.isAssignableFrom(bean.getClass())) {
 				return (T) bean;
@@ -18,7 +18,7 @@ public class BeanContainerHelper {
 	// return isBeanScopedAs(clazz, BeanScope.SINGLETON);
 	// }
 	@SuppressWarnings({ "rawtypes" })
-	public Boolean isLocal(final Class clazz) {
+	Boolean isLocal(final Class clazz) {
 		return isBeanScopedAs(clazz, BeanScope.LOCAL);
 	}
 
@@ -33,7 +33,7 @@ public class BeanContainerHelper {
 		}
 	}
 
-	public Object createObject(final Class class1) {
+	Object createObject(final Class class1) {
 		try {
 			return ReflectionUtils.newInstance(class1);
 		} catch (final Exception e) {
@@ -59,12 +59,12 @@ public class BeanContainerHelper {
 		return beanName;
 	}
 
-	public boolean hastType(final Map<String, Object> beanList, final Class<? extends Object> class1) {
+	private boolean hastType(final Map<String, Object> beanList, final Class<? extends Object> class1) {
 		final Object findByType = findByType(beanList, class1);
 		return findByType != null;
 	}
 
-	public boolean hasNotType(final Class<? extends Object> class1, final Map<String, Object> beanList) {
+	boolean hasNotType(final Class<? extends Object> class1, final Map<String, Object> beanList) {
 		return !this.hastType(beanList, class1);
 	}
 
@@ -77,7 +77,7 @@ public class BeanContainerHelper {
 		}
 	}
 
-	public String provideBeanName(final Object bean) {
+	String provideBeanName(final Object bean) {
 		return bean.getClass().getName();
 	}
 
