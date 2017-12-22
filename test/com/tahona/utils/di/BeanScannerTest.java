@@ -25,7 +25,7 @@ public class BeanScannerTest {
         final Map<String, Class> classes = beanScanner.scan();
 
         final Injector injector = new Injector();
-        injector.addAll(classes);
+        injector.registerAll(classes);
 
         final BeanContainer container = new BeanContainer(injector);
         container.initialize();

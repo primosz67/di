@@ -112,7 +112,7 @@ public class Injector {
 		return new Class[] {};
 	}
 
-	public void addAll(final Map<String, Class> classes) {
+	public void registerAll(final Map<String, Class> classes) {
 		classes.forEach(this::register);
 	}
 }
