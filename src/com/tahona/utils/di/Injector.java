@@ -13,7 +13,7 @@ public class Injector {
 	private final Map<String, Class> registeredDefinition = new HashMap<String, Class>();
 
 	public Injector() {
-		for (Class iterable_element : getClasses()) {
+		for (final Class iterable_element : getClasses()) {
 			register(iterable_element);
 		}
 	}
@@ -23,19 +23,19 @@ public class Injector {
 	}
 
 	public <T> T inject(final T bean) {
-		Class<? extends Object> rootClass = bean.getClass();
+		final Class<? extends Object> rootClass = bean.getClass();
 		injectBySelectedClass(bean, rootClass);
 		return bean;
 	}
 
 	@SuppressWarnings("unchecked")
 	private <T> void injectBySelectedClass(final T bean,
-			Class<? extends Object> rootClass) {
-		Class supperClass = rootClass.getSuperclass();
+										   final Class<? extends Object> rootClass) {
+		final Class supperClass = rootClass.getSuperclass();
 
 		for (final Field declaredField : rootClass.getDeclaredFields()) {
 			final Class<?> propertyType = declaredField.getType();
-			Wire wireAnnotation = declaredField.getAnnotation(Wire.class);
+			final Wire wireAnnotation = declaredField.getAnnotation(Wire.class);
 
 			if (propertyType != null && wireAnnotation != null) {
 				if (!wireAnnotation.name().isEmpty()) {
@@ -52,15 +52,15 @@ public class Injector {
 		}
 	}
 
-	private <T> void injectField(final T bean, final Field field, String beanName) {
+	private <T> void injectField(final T bean, final Field field, final String beanName) {
 		try {
-			boolean accessible = field.isAccessible();
+			final boolean accessible = field.isAccessible();
 			field.setAccessible(true);
 			// checkAnnotation add in near future:D
 			// @Inject("myOwnNameBean")
 			// now its working using just Class type to find first in kind.
 			
-			boolean isFieldNotSetAlready = (field.get(bean) == null);
+			final boolean isFieldNotSetAlready = (field.get(bean) == null);
 			if (isFieldNotSetAlready) {
 				Object beanToInsert = null; 
 				if (beanName != null) {
@@ -110,5 +110,9 @@ public class Injector {
 
 	private Class[] getClasses() {
 		return new Class[] {};
+	}
+
+	public void addAll(final Map<String, Class> classes) {
+		classes.forEach(this::register);
 	}
 }

@@ -1,5 +1,6 @@
 package com.tahona.utils.di;
 
+import com.tahona.utils.di.annotation.Bean;
 import org.junit.Test;
 
 import com.tahona.utils.di.annotation.Wire;
@@ -493,7 +494,41 @@ public class TestBeanContainer {
         final InjectConstructorBean result = beanContainer.getBean(InjectConstructorBean.class);
         final WireConstructorBean w = beanContainer.getBean(WireConstructorBean.class);
         assertNotNull(result.simpleBean);
+        assertNotNull(result.wireConstructorBean);
         assertNotNull(w.bean);
+    }
+
+    public static class InjectConstructorWithInitBean {
+        private final SimpleBean simpleBean;
+        private  boolean invokedInit;
+
+        public InjectConstructorWithInitBean(final SimpleBean simpleBean) {
+            this.simpleBean = simpleBean;
+        }
+
+        @Init
+        void init () {
+            this.invokedInit = true;
+        }
+    }
+
+    @Test
+    public void shouldInvokeInitMethodWhenConstructorBeanInjected() {
+        // g
+        final Injector injector = new Injector();
+
+        injector.register(InjectConstructorWithInitBean.class);
+        injector.register(SimpleBean.class);
+
+        final BeanContainer beanContainer = new BeanContainer(injector);
+
+        // w
+        beanContainer.initialize();
+
+        // t
+        final InjectConstructorWithInitBean result = beanContainer.getBean(InjectConstructorWithInitBean.class);
+        assertNotNull(result.simpleBean);
+        assertTrue(result.invokedInit);
     }
 
 }

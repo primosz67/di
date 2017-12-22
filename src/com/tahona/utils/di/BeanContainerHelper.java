@@ -1,5 +1,7 @@
 package com.tahona.utils.di;
 
+import com.tahona.utils.di.annotation.Bean;
+
 import java.util.Map;
 
 class BeanContainerHelper {
@@ -81,4 +83,7 @@ class BeanContainerHelper {
 		return bean.getClass().getName();
 	}
 
+	public String getBeanName(Class x) {
+		return x.getName();
+	}
 }
