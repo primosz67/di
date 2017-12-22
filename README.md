@@ -18,12 +18,24 @@ Simple Automatic dependency injection.
 	beanContainer.initialize();
 
 ```
-### @Wire annotation
+### Bean injection @Wire
 
 ``` java
 class UserService {
   @Wire private ConnectionService connectionService;
   //...
+}
+```
+### Bean injection - constructor
+
+``` java
+@Service
+class UserService {
+    private ConnectionService connectionService;
+
+    public UserService (ConnectionService connectionService) {
+        this.connectionService = connectionService;
+    }
 }
 ```
 
@@ -32,11 +44,38 @@ class UserService {
 ### @Init annotation
 Method executed after bean injection. 
 ```java
-  class UserService {
+ class UserService {
+ 	@Wire private ConnectionService connectionService;
+
+  	@Init
+  	private init () {
+      	connectionService.prepareForConnection();
+  	}
+}
+```
+
+### Bean Scanner
+```java
+
+@Component
+class UserService {
  	@Wire private ConnectionService connectionService;
   	@Init
   	private init () {
-      		connectionService.prepareForConnection();
+      	connectionService.prepareForConnection();
   	}
 }
-```		
+
+
+    Map<String,Class> classes = new BeanScanner("com.test").scan();
+    Injector in = new Injector()
+    in.registerAll(classes);
+
+    BeanContainer b = new BeanContainer(in);
+    b.initialize()
+
+
+```
+
+
+Bean scan annotations: @Component, @Service, @Repository
