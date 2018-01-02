@@ -37,7 +37,7 @@ class BeanCreator {
     }
 
     private Object[] sort(final List<Object> beans) {
-        beans.sort(Comparator.comparingInt(c -> constructorBeans.indexOf(c.getClass())));
+//        beans.sort(Comparator.comparingInt(c -> constructorBeans.indexOf(c.getClass())));
         return beans.toArray();
     }
 

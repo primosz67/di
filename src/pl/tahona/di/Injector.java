@@ -16,15 +16,19 @@ public class Injector {
     private final Set<InjectDefinition> annotationSet = new HashSet<>();
 
     public Injector() {
-        this.addAnnotation(new SimpleInjectDefinition<>(Wire.class, Wire::name));
+        this.addDefinition(new SimpleInjectDefinition<>(Wire.class, Wire::name));
 
         for (final Class classes : getClasses()) {
             register(classes);
         }
     }
 
-    public <A extends Annotation> void addAnnotation(final InjectDefinition<A> definition) {
+    public void addDefinition(final InjectDefinition definition) {
         annotationSet.add(definition);
+    }
+
+    public void addDefinitions(final Set<InjectDefinition> definitions) {
+        annotationSet.addAll(definitions);
     }
 
     Map<String, Class> getRegistered() {

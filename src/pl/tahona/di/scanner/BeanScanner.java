@@ -5,6 +5,7 @@ import pl.tahona.di.annotation.Bean;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,7 +53,7 @@ public class BeanScanner {
 
         final String beanName = definition.getBeanName(aClass.getAnnotation(definition.getAnnotation()));
 
-        if (!beanName.isEmpty()) {
+        if (beanName != null && !beanName.isEmpty()) {
             return beanName;
         }
 
@@ -67,7 +68,11 @@ public class BeanScanner {
         }
     }
 
-    public void addDefinition(final SimpleScannerDefinition definition) {
+    public void addDefinition(final ScannerDefinition definition) {
         this.definitions.add(definition);
+    }
+
+    public void addDefinitions(final Collection<ScannerDefinition> definitions) {
+        this.definitions.addAll(definitions);
     }
 }

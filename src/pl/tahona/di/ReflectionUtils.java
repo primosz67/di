@@ -75,7 +75,21 @@ public final class ReflectionUtils {
             e.printStackTrace();
         }
 
-        throw new IllegalStateException("Something went wrong");
+        throw new IllegalStateException("Something went wrong -" +
+                " bean: " + sc +
+                " classes: " + join(cls) +
+                " objects: " + join(obj));
+    }
+
+    private static String join(final Object... cls) {
+        final List<Object> classes = Arrays.asList(cls);
+
+        final StringBuilder res = new StringBuilder();
+        for (final Object aClass : classes) {
+            res.append(" ");
+            res.append(aClass.toString());
+        }
+        return res.toString();
     }
 
     public static <T> T newInstance(final Class sc) {
@@ -88,7 +102,7 @@ public final class ReflectionUtils {
             e.printStackTrace();
         }
 
-        throw new IllegalStateException("Something went wrong");
+        throw new IllegalStateException("Something went wrong " + sc);
     }
 
     private static Class[] getTypes(final Object[] obj) {
@@ -142,4 +156,36 @@ public final class ReflectionUtils {
         return classes;
     }
 
+    public static Set<Class> getClassesOfClass(Class clazz) {
+            final List<Class> res = new ArrayList<>();
+
+            do {
+                res.add(clazz);
+
+                // First, add all the interfaces implemented by this class
+                final Class[] interfaces = clazz.getInterfaces();
+
+                if (interfaces.length > 0) {
+                    res.addAll(Arrays.asList(interfaces));
+
+                    for (final Class clasInterface : interfaces) {
+                        res.addAll(getClassesOfClass(clasInterface));
+                    }
+                }
+
+                // Add the super class
+                final Class<?> superClass = clazz.getSuperclass();
+
+                // Interfaces does not have java,lang.Object as superclass, they have null, so break the cycle and return
+                if (superClass == null) {
+                    break;
+                }
+
+                // Now inspect the superclass
+                clazz = superClass;
+            } while (!"java.lang.Object".equals(clazz.getCanonicalName()));
+
+            return new HashSet<>(res);
+
+    }
 }

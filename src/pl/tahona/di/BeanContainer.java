@@ -8,15 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * Dependency injection
- *
- * @author primosz67
- */
 public class BeanContainer {
 
     private final BeanContainerHelper helper = new BeanContainerHelper();
-
     private final Map<String, Object> beanList = new ConcurrentHashMap<String, Object>();
 
     private final Injector injector;
@@ -24,6 +18,8 @@ public class BeanContainer {
 
     public BeanContainer(final Injector injector) {
         this.injector = injector;
+
+        //FIXME - old mistakes :(
         injector.setContainer(this);
     }
 
@@ -50,7 +46,7 @@ public class BeanContainer {
         checkMissingBeans(creatorsList);
     }
 
-    private List<BeanCreator> buildCreators(Map<String, Class> all) {
+    private List<BeanCreator> buildCreators(final Map<String, Class> all) {
         return all.entrySet().stream()
                     .filter(predicateNoConstruct().negate())
                     .map(entry -> {
@@ -61,12 +57,14 @@ public class BeanContainer {
                     .collect(Collectors.toList());
     }
 
-    private Map<Class, BeanCreator> buildCreatorsMap(List<BeanCreator> creatorsList) {
+    private Map<Class, BeanCreator> buildCreatorsMap(final List<BeanCreator> creatorsList) {
         final Map<Class, BeanCreator> creatorMap = new HashMap<>();
+
         creatorsList.forEach(creator -> {
             final List<Class<?>> clazz = Arrays.asList(creator.getConstructorBeans());
             clazz.forEach(c -> creatorMap.put(c, creator));
         });
+
         return creatorMap;
     }
 
@@ -90,7 +88,7 @@ public class BeanContainer {
                     }).reduce((s, s2) -> s + s2).orElse("");
             ;
 
-            throw new IllegalStateException("Missing beans: " + missingBeans);
+            throw new IllegalStateException("Missing beans: " +missingBeans);
         }
     }
 
@@ -107,10 +105,15 @@ public class BeanContainer {
 
             if (o != null) {
                 addBean(c.getBeanName(), o);
-                final BeanCreator toInject = creatorMap.get(o.getClass());
 
-                if (toInject != null) {
-                    addBeanByCreator(creatorMap, toInject);
+                final Set<Class> classes = ReflectionUtils.getClassesOfClass(o.getClass());
+
+                final Optional<BeanCreator> beanCreatorToInvoke = classes.stream()
+                        .filter(ccc -> creatorMap.get(ccc) != null)
+                        .findFirst().map(creatorMap::get);
+
+                if (beanCreatorToInvoke.isPresent()) {
+                    addBeanByCreator(creatorMap, beanCreatorToInvoke.get());
                 }
             }
         }
