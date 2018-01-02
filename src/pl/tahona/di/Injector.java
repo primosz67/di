@@ -83,31 +83,28 @@ public class Injector {
 
     private <T> void injectField(final T bean, final Field field, final String beanName) {
         try {
-            final boolean accessible = field.isAccessible();
+            final boolean historyFieldState = field.isAccessible();
             field.setAccessible(true);
-            // checkAnnotation add in near future:D
-            // @Inject("myOwnNameBean")
-            // now its working using just Class type to find first in kind.
 
             final boolean isFieldNotSetAlready = (field.get(bean) == null);
             if (isFieldNotSetAlready) {
-                Object beanToInsert = null;
-                if (beanName != null) {
-                    beanToInsert = beanContainer.getBean(beanName, field.getType());
-                } else {
-                    beanToInsert = beanContainer.getBean(field.getType());
-                }
+                final Object beanToInsert = getBean(field, beanName);
                 field.set(bean, beanToInsert);
             }
-            field.setAccessible(accessible);
 
-        } catch (final SecurityException e) {
-            e.printStackTrace();
-        } catch (final IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (final IllegalAccessException e) {
-            e.printStackTrace();
+            //set old access setup
+            field.setAccessible(historyFieldState);
+
+        } catch (final SecurityException | IllegalArgumentException | IllegalAccessException e) {
+            throw new InjectBeanException("Error when injecting: " + beanName + ". " + field.getName(), e);
         }
+    }
+
+    private Object getBean(final Field field, final String beanName) {
+        if (beanName != null) {
+            return beanContainer.getBean(beanName, field.getType());
+        }
+        return beanContainer.getBean(field.getType());
     }
 
     private <T> void injectField(final T bean, final Field field) {

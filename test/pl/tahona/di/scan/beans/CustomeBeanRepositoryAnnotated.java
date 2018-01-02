@@ -5,9 +5,9 @@ import pl.tahona.di.annotation.Bean;
 @Bean()
 class CustomeBeanRepositoryAnnotated implements BeanRepositoryInterface {
 
-    private BeanRepositoryAnnotated beanRepositoryAnnotated;
+    private final BeanRepositoryAnnotated beanRepositoryAnnotated;
 
-    public CustomeBeanRepositoryAnnotated(BeanRepositoryAnnotated beanRepositoryAnnotated) {
+    public CustomeBeanRepositoryAnnotated(final BeanRepositoryAnnotated beanRepositoryAnnotated) {
         this.beanRepositoryAnnotated = beanRepositoryAnnotated;
     }
 

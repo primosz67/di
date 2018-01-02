@@ -48,13 +48,13 @@ public class BeanContainer {
 
     private List<BeanCreator> buildCreators(final Map<String, Class> all) {
         return all.entrySet().stream()
-                    .filter(predicateNoConstruct().negate())
-                    .map(entry -> {
-                        final String beanName = entry.getKey();
-                        final Class classDefinition = entry.getValue();
-                        return new BeanCreator(beanName, classDefinition, getConstructorBeans(classDefinition));
-                    })
-                    .collect(Collectors.toList());
+                .filter(predicateNoConstruct().negate())
+                .map(entry -> {
+                    final String beanName = entry.getKey();
+                    final Class classDefinition = entry.getValue();
+                    return new BeanCreator(beanName, classDefinition, getConstructorBeans(classDefinition));
+                })
+                .collect(Collectors.toList());
     }
 
     private Map<Class, BeanCreator> buildCreatorsMap(final List<BeanCreator> creatorsList) {
@@ -86,9 +86,8 @@ public class BeanContainer {
 
                         return creator.getBeanName() + ": " + missingClasses.toString();
                     }).reduce((s, s2) -> s + s2).orElse("");
-            ;
 
-            throw new IllegalStateException("Missing beans: " +missingBeans);
+            throw new IllegalStateException("Missing beans: " + missingBeans);
         }
     }
 
@@ -108,13 +107,11 @@ public class BeanContainer {
 
                 final Set<Class> classes = ReflectionUtils.getClassesOfClass(o.getClass());
 
-                final Optional<BeanCreator> beanCreatorToInvoke = classes.stream()
+                classes.stream()
                         .filter(ccc -> creatorMap.get(ccc) != null)
-                        .findFirst().map(creatorMap::get);
-
-                if (beanCreatorToInvoke.isPresent()) {
-                    addBeanByCreator(creatorMap, beanCreatorToInvoke.get());
-                }
+                        .map(creatorMap::get)
+                        .forEach(beanCreatorToInvoke ->
+                                addBeanByCreator(creatorMap, beanCreatorToInvoke));
             }
         }
     }
@@ -216,8 +213,8 @@ public class BeanContainer {
      * but will be injected by Injector in future injections.
      * - getBean also will work;
      *
-     * @param  providedBeanName - name to replace
-     * @param  bean - Object
+     * @param providedBeanName - name to replace
+     * @param bean             - Object
      */
     public void replaceBean(final String providedBeanName, final Object bean) {
         final Object initializedBean = this.getBean(providedBeanName);
