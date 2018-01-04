@@ -1,9 +1,33 @@
-# DI
-Simple Automatic dependency injection.
+# Tahona DI #
+Automatic dependency injection that works on Desktop, Web and Android.
 
-##Basic use:
+[Spring support](http://www.example.com/)
 
-###Container initialization
+
+### Installation ###
+
+Maven:
+```
+<groupId>pl.tahona</groupId>
+<artifactId>di</artifactId>
+<version>1.0.0</version>
+
+
+<groupId>pl.tahona</groupId>
+<artifactId>di-spring</artifactId>
+<version>1.0.0</version>
+
+```
+
+Gradle:
+```
+  compile 'pl.tahona:di:1.0.0'
+  compile 'pl.tahona:di-spring:1.0.0'
+```
+
+
+##Basic use: ###
+###Container initialization ###
 ```java
 //Create Injector:
 	final Injector injector = new Injector();
@@ -18,7 +42,7 @@ Simple Automatic dependency injection.
 	beanContainer.initialize();
 
 ```
-### Bean injection @Wire
+### Bean injection @Wire ###
 
 ``` java
 class UserService {
@@ -26,7 +50,7 @@ class UserService {
   //...
 }
 ```
-### Bean injection - constructor
+### Bean injection - constructor ###
 
 ``` java
 @Service
@@ -41,7 +65,7 @@ class UserService {
 
 
 
-### @Init annotation
+### @Init annotation ###
 Method executed after bean injection. 
 ```java
  class UserService {
@@ -54,7 +78,7 @@ Method executed after bean injection.
 }
 ```
 
-### Bean Scanner
+### Bean Scanner ###
 ```java
 
 @Component
@@ -76,7 +100,6 @@ class UserService {
 
 
 ```
-
 
 Bean scan annotations: @Component, @Service, @Repository
 
