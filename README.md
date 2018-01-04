@@ -69,12 +69,12 @@ Method executed after bean injection.
 ```java
 @Component
 class UserService {
- 	@Wire private ConnectionService connectionService;
+    @Wire private ConnectionService connectionService;
 
-  	@Init
-  	private init () {
+    @Init
+    private init () {
         connectionService.prepareForConnection();
-  	}
+    }
 }
 
 ...
