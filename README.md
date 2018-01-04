@@ -1,8 +1,7 @@
 # Tahona DI #
 Automatic dependency injection that works on Desktop, Web and Android.
 
-[Spring support](http://www.example.com/)
-
+Spring support library: [here](https://github.com/tahonaPL/di-spring)
 
 ### Installation ###
 
@@ -11,23 +10,14 @@ Maven:
 <groupId>pl.tahona</groupId>
 <artifactId>di</artifactId>
 <version>1.0.0</version>
-
-
-<groupId>pl.tahona</groupId>
-<artifactId>di-spring</artifactId>
-<version>1.0.0</version>
-
 ```
 
 Gradle:
 ```
   compile 'pl.tahona:di:1.0.0'
-  compile 'pl.tahona:di-spring:1.0.0'
 ```
-
-
-##Basic use: ###
-###Container initialization ###
+## Basic use: ###
+### Container initialization ###
 ```java
 //Create Injector:
 	final Injector injector = new Injector();
@@ -101,6 +91,6 @@ class UserService {
 
 ```
 
-Bean scan annotations: @Component, @Service, @Repository
+Bean scan annotations are in [DI-Spring](https://github.com/tahonaPL/di-spring)Di Spring: @Component, @Service, @Repository
 
 
