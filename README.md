@@ -30,7 +30,6 @@ Gradle:
 		
 	final BeanContainer beanContainer = new BeanContainer(injector);
 	beanContainer.initialize();
-
 ```
 ### Bean injection @Wire ###
 
@@ -53,8 +52,6 @@ class UserService {
 }
 ```
 
-
-
 ### @Init annotation ###
 Method executed after bean injection. 
 ```java
@@ -63,34 +60,33 @@ Method executed after bean injection.
 
   	@Init
   	private init () {
-      	connectionService.prepareForConnection();
+        connectionService.prepareForConnection();
   	}
 }
 ```
 
 ### Bean Scanner ###
 ```java
-
 @Component
 class UserService {
  	@Wire private ConnectionService connectionService;
+
   	@Init
   	private init () {
-      	connectionService.prepareForConnection();
+        connectionService.prepareForConnection();
   	}
 }
 
+...
 
-    Map<String,Class> classes = new BeanScanner("com.test").scan();
-    Injector in = new Injector()
-    in.registerAll(classes);
+Map<String,Class> classes = new BeanScanner("com.test").scan();
+Injector in = new Injector()
+in.registerAll(classes);
 
-    BeanContainer b = new BeanContainer(in);
-    b.initialize()
-
-
+BeanContainer b = new BeanContainer(in);
+b.initialize()
 ```
 
-Bean scan annotations are in [DI-Spring](https://github.com/tahonaPL/di-spring)Di Spring: @Component, @Service, @Repository
+Spring annotations (@Component, @Service, @Repository) are in [DI-Spring](https://github.com/tahonaPL/di-spring)
 
 
