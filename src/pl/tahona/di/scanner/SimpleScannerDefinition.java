@@ -1,7 +1,8 @@
 package pl.tahona.di.scanner;
 
+import pl.tahona.di.scanner.util.Function;
+
 import java.lang.annotation.Annotation;
-import java.util.function.Function;
 
 public class SimpleScannerDefinition<A extends Annotation> implements ScannerDefinition<A> {
 

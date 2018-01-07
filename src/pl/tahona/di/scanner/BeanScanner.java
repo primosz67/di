@@ -1,9 +1,7 @@
 package pl.tahona.di.scanner;
 
-import pl.tahona.di.ReflectionUtils;
 import pl.tahona.di.annotation.Bean;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -16,17 +14,19 @@ public class BeanScanner {
 
     private final BeanNameProvider nameProvider = new BeanNameProvider();
     private final List<ScannerDefinition> definitions = new ArrayList<>();
+    private BeanFinder finder;
 
     public BeanScanner(final String... packages) {
         this.packages = packages;
 
         addDefinition(new SimpleScannerDefinition<>(Bean.class, Bean::value));
+        setFinder(new BasicFinder());
     }
 
     public Map<String, Class> scan() {
         final List<Class> list = new ArrayList<>();
         for (final String aPackage : packages) {
-            list.addAll(getClass(aPackage));
+            list.addAll(finder.findClasses(aPackage));
         }
 
         return list.stream()
@@ -60,19 +60,18 @@ public class BeanScanner {
         return nameProvider.getBeanName(aClass);
     }
 
-    private List<Class> getClass(final String aPackage) {
-        try {
-            return ReflectionUtils.getClasses(aPackage);
-        } catch (ClassNotFoundException | IOException e) {
-            throw new IllegalStateException("Package scan not working");
-        }
-    }
-
-    public void addDefinition(final ScannerDefinition definition) {
+    public BeanScanner addDefinition(final ScannerDefinition definition) {
         this.definitions.add(definition);
+        return this;
     }
 
-    public void addDefinitions(final Collection<ScannerDefinition> definitions) {
+    public BeanScanner addDefinitions(final Collection<ScannerDefinition> definitions) {
         this.definitions.addAll(definitions);
+        return this;
+    }
+
+    public BeanScanner setFinder(final BeanFinder finder) {
+        this.finder = finder;
+        return this;
     }
 }

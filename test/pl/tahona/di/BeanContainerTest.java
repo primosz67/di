@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import pl.tahona.di.inject.InjectBeanException;
+import pl.tahona.di.scan.beans.TestNew;
+import pl.tahona.di.sameBeans.*;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.*;
@@ -445,7 +447,6 @@ public class BeanContainerTest {
         System.err.println(timeSpend);
         assertTrue(timeSpend < 120);
 
-
     }
 
     public static class InjectConstructorBean {
@@ -516,7 +517,6 @@ public class BeanContainerTest {
         }
     }
 
-
     @Test(expected = IllegalStateException.class)
     public void shouldThrowExceptionWhenNoBeanToWireConstructorBean() {
         // g
@@ -532,14 +532,14 @@ public class BeanContainerTest {
 
     public static class InjectConstructorWithInitBean {
         private final SimpleBean simpleBean;
-        private  boolean invokedInit;
+        private boolean invokedInit;
 
         public InjectConstructorWithInitBean(final SimpleBean simpleBean) {
             this.simpleBean = simpleBean;
         }
 
         @Init
-        void init () {
+        void init() {
             this.invokedInit = true;
         }
     }
@@ -561,6 +561,42 @@ public class BeanContainerTest {
         final InjectConstructorWithInitBean result = beanContainer.getBean(InjectConstructorWithInitBean.class);
         assertNotNull(result.simpleBean);
         assertTrue(result.invokedInit);
+    }
+
+    /**
+     * Fix for Bug with overling creator
+     */
+    @Test
+    public void shouldCreateThreeBeansWithSameConstructorDependency() {
+        // g
+        final Injector injector = new Injector();
+
+        injector.register(BeanA.class);
+        injector.register(BeanC.class);
+        injector.register(BeanB.class);
+        injector.register(BeanD.class);
+        injector.register(BeanE.class);
+        injector.register(BeanF.class);
+
+        injector.register(TestNew.class);
+
+        final BeanContainer beanContainer = new BeanContainer(injector);
+
+        // w
+        beanContainer.initialize();
+
+        // t
+        final BeanA resultA = beanContainer.getBean(BeanA.class);
+        assertNotNull(resultA);
+        assertNotNull(resultA.getTestNew());
+
+        final BeanB resultB = beanContainer.getBean(BeanB.class);
+        assertNotNull(resultB);
+        assertNotNull(resultB.getBeanA());
+
+        final BeanF beanF = beanContainer.getBean(BeanF.class);
+        assertNotNull(beanF);
+        assertNotNull(beanF.getBeanA());
     }
 
 }

@@ -39,9 +39,9 @@ public class BeanContainer {
     private void initParametrizedConstructorBeans() {
         final Map<String, Class> registeredClasses = injector.getRegistered();
         final List<BeanCreator> creatorsList = buildCreators(registeredClasses);
-        final Map<Class, BeanCreator> creatorMap = buildCreatorsMap(creatorsList);
+        final Map<Class, Set<BeanCreator>> creatorsRegistry = buildCreatorsMap(creatorsList);
 
-        creatorsList.forEach(c -> addBeanByCreator(creatorMap, c));
+        creatorsList.forEach(beanCreator -> addBeanByCreator(creatorsRegistry, beanCreator));
 
         checkMissingBeans(creatorsList);
     }
@@ -57,16 +57,23 @@ public class BeanContainer {
                 .collect(Collectors.toList());
     }
 
-    private Map<Class, BeanCreator> buildCreatorsMap(final List<BeanCreator> creatorsList) {
-        final Map<Class, BeanCreator> creatorMap = new HashMap<>();
+    private Map<Class, Set<BeanCreator>> buildCreatorsMap(final List<BeanCreator> creatorsList) {
+        final Map<Class, Set<BeanCreator>> creatorMap = new HashMap<>();
 
         creatorsList.forEach(creator -> {
             final List<Class<?>> clazz = Arrays.asList(creator.getConstructorBeans());
-            clazz.forEach(c -> creatorMap.put(c, creator));
+            clazz.forEach(c -> {
+                final Set<BeanCreator> collection = Optional.ofNullable(creatorMap.get(c))
+                        .orElseGet(HashSet::new);
+
+                collection.add(creator);
+                creatorMap.put(c, collection);
+            });
         });
 
         return creatorMap;
     }
+
 
     private void checkMissingBeans(final List<BeanCreator> creatorsList) {
         final List<BeanCreator> notFilled = creatorsList.stream()
@@ -84,34 +91,34 @@ public class BeanContainer {
                                 .map(Class::toString)
                                 .collect(Collectors.toList());
 
-                        return creator.getBeanName() + ": " + missingClasses.toString();
+                        return creator.getBeanName() + ": " + missingClasses.toString() + ", ";
                     }).reduce((s, s2) -> s + s2).orElse("");
 
-            throw new IllegalStateException("Missing beans: " + missingBeans);
+            throw new IllegalStateException("Missing beans (" + missingBeans + ")");
         }
     }
 
-    private void addBeanByCreator(final Map<Class, BeanCreator> creatorMap, final BeanCreator c) {
-        if (!c.isCreated()) {
+    private void addBeanByCreator(final Map<Class, Set<BeanCreator>> creatorRegistry, final BeanCreator beanCreator) {
+        if (!beanCreator.isCreated()) {
 
-            final List<Class<?>> clazz = Arrays.asList(c.getConstructorBeans());
+            final List<Class<?>> clazz = Arrays.asList(beanCreator.getConstructorBeans());
             final List<Object> beans = clazz.stream()
                     .map(this::getBean)
                     .filter(x -> x != null)
                     .collect(Collectors.toList());
 
-            final Object o = c.create(beans);
+            final Object o = beanCreator.create(beans);
 
             if (o != null) {
-                addBean(c.getBeanName(), o);
+                addBean(beanCreator.getBeanName(), o);
 
                 final Set<Class> classes = ReflectionUtils.getClassesOfClass(o.getClass());
 
                 classes.stream()
-                        .filter(ccc -> creatorMap.get(ccc) != null)
-                        .map(creatorMap::get)
+                        .filter(createdBeanClass -> creatorRegistry.get(createdBeanClass) != null)
+                        .flatMap(createdBeanClass -> creatorRegistry.get(createdBeanClass).stream())
                         .forEach(beanCreatorToInvoke ->
-                                addBeanByCreator(creatorMap, beanCreatorToInvoke));
+                                addBeanByCreator(creatorRegistry, beanCreatorToInvoke));
             }
         }
     }

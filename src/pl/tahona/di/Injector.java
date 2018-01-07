@@ -35,8 +35,10 @@ public class Injector {
         return registeredDefinition;
     }
 
-    <T> T inject(final T bean) {
+    public <T> T inject(final T bean) {
         final Class<? extends Object> rootClass = bean.getClass();
+
+
         injectBySelectedClass(bean, rootClass);
         return bean;
     }
@@ -44,6 +46,7 @@ public class Injector {
     @SuppressWarnings("unchecked")
     private <T> void injectBySelectedClass(final T bean,
                                            final Class<? extends Object> rootClass) {
+
         final Class supperClass = rootClass.getSuperclass();
 
         for (final Field declaredField : rootClass.getDeclaredFields()) {
@@ -54,7 +57,7 @@ public class Injector {
 
                 if (optionalDef.isPresent()) {
                     final String name = optionalDef.map(definition -> {
-                        Annotation annotation = declaredField.getAnnotation(definition.getAnnotationType());
+                        final Annotation annotation = declaredField.getAnnotation(definition.getAnnotationType());
                         return definition.getBeanName(annotation);
                     }).orElse("");
 
@@ -65,7 +68,6 @@ public class Injector {
                     } else {
                         throw new InjectBeanException("Cannot inject Bean for: " + declaredField.toString());
                     }
-
                 }
             }
         }

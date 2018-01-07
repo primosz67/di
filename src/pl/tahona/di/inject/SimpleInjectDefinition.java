@@ -1,7 +1,8 @@
 package pl.tahona.di.inject;
 
+import pl.tahona.di.scanner.util.Function;
+
 import java.lang.annotation.Annotation;
-import java.util.function.Function;
 
 public class SimpleInjectDefinition<A extends Annotation> implements InjectDefinition<A> {
     private final Class<A> aClass;
