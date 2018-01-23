@@ -11,9 +11,8 @@ import java.util.*;
 
 public final class ReflectionUtils {
 
-    public static void invokeMethodWith(final Object bean, final Class<? extends Annotation> class1,
-                                        final Object... objects) {
-        final Method[] methods = bean.getClass().getDeclaredMethods();
+    public static void invokeMethodWith(final Object bean, final Class<? extends Annotation> class1, final Object... objects) {
+        final List<Method> methods = getMethods(bean, class1, true);
         for (final Method method : methods) {
             method.setAccessible(true);
             if (method.isAnnotationPresent(class1)) {

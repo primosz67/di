@@ -1,12 +1,17 @@
 package pl.tahona.di;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import pl.tahona.di.annotation.Init;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class BeanContainer {
 
@@ -41,58 +46,60 @@ public class BeanContainer {
         final List<BeanCreator> creatorsList = buildCreators(registeredClasses);
         final Map<Class, Set<BeanCreator>> creatorsRegistry = buildCreatorsMap(creatorsList);
 
-        creatorsList.forEach(beanCreator -> addBeanByCreator(creatorsRegistry, beanCreator));
+        for (final BeanCreator beanCreator : creatorsList) {
+            addBeanByCreator(creatorsRegistry, beanCreator);
+        }
 
         checkMissingBeans(creatorsList);
     }
 
     private List<BeanCreator> buildCreators(final Map<String, Class> all) {
-        return all.entrySet().stream()
-                .filter(predicateNoConstruct().negate())
-                .map(entry -> {
+        return FluentIterable.from(all.entrySet())
+                .filter(Predicates.not(predicateNoConstruct()))
+                .transform(entry -> {
                     final String beanName = entry.getKey();
                     final Class classDefinition = entry.getValue();
                     return new BeanCreator(beanName, classDefinition, getConstructorBeans(classDefinition));
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Map<Class, Set<BeanCreator>> buildCreatorsMap(final List<BeanCreator> creatorsList) {
         final Map<Class, Set<BeanCreator>> creatorMap = new HashMap<>();
 
-        creatorsList.forEach(creator -> {
+        for (final BeanCreator creator : creatorsList) {
             final List<Class<?>> clazz = Arrays.asList(creator.getConstructorBeans());
-            clazz.forEach(c -> {
-                final Set<BeanCreator> collection = Optional.ofNullable(creatorMap.get(c))
-                        .orElseGet(HashSet::new);
+
+            for (final Class<?> c : clazz) {
+                final Set<BeanCreator> collection = Optional.fromNullable(creatorMap.get(c))
+                        .or(HashSet::new);
 
                 collection.add(creator);
                 creatorMap.put(c, collection);
-            });
-        });
+            }
+        }
 
         return creatorMap;
     }
 
-
     private void checkMissingBeans(final List<BeanCreator> creatorsList) {
-        final List<BeanCreator> notFilled = creatorsList.stream()
+        final List<BeanCreator> notFilled = FluentIterable.from(creatorsList)
                 .filter(x -> !x.isCreated())
-                .collect(Collectors.toList());
+                .toList();
 
         if (!notFilled.isEmpty()) {
-            final String missingBeans = notFilled.stream()
-                    .map(creator -> {
-                        final Class<?>[] constructorBeans = creator.getConstructorBeans();
+            final ImmutableList<String> strings = FluentIterable.from(notFilled)
+                    .transform(creator -> {
+                        final Class[] constructorBeans = creator.getConstructorBeans();
 
-                        final List<String> missingClasses = Arrays.asList(constructorBeans)
-                                .stream()
+                        final List<String> missingClasses = FluentIterable.from(Arrays.asList(constructorBeans))
                                 .filter(z -> getBean(z) == null)
-                                .map(Class::toString)
-                                .collect(Collectors.toList());
+                                .transform(c->c.toString())
+                                .toList();
 
                         return creator.getBeanName() + ": " + missingClasses.toString() + ", ";
-                    }).reduce((s, s2) -> s + s2).orElse("");
+                    }).toList();
+            final String missingBeans = Joiner.on(" ").join(strings);
 
             throw new IllegalStateException("Missing beans (" + missingBeans + ")");
         }
@@ -101,11 +108,11 @@ public class BeanContainer {
     private void addBeanByCreator(final Map<Class, Set<BeanCreator>> creatorRegistry, final BeanCreator beanCreator) {
         if (!beanCreator.isCreated()) {
 
-            final List<Class<?>> clazz = Arrays.asList(beanCreator.getConstructorBeans());
-            final List<Object> beans = clazz.stream()
-                    .map(this::getBean)
-                    .filter(x -> x != null)
-                    .collect(Collectors.toList());
+            final List<Class> clazz = Arrays.asList(beanCreator.getConstructorBeans());
+            final ImmutableList<Object> beans = FluentIterable.from(clazz)
+                    .transform(this::getBean)
+                    .filter(x->x!=null)
+                    .toList();
 
             final Object o = beanCreator.create(beans);
 
@@ -114,11 +121,14 @@ public class BeanContainer {
 
                 final Set<Class> classes = ReflectionUtils.getClassesOfClass(o.getClass());
 
-                classes.stream()
+                final ImmutableList<BeanCreator> beanCreators = FluentIterable.from(classes)
                         .filter(createdBeanClass -> creatorRegistry.get(createdBeanClass) != null)
-                        .flatMap(createdBeanClass -> creatorRegistry.get(createdBeanClass).stream())
-                        .forEach(beanCreatorToInvoke ->
-                                addBeanByCreator(creatorRegistry, beanCreatorToInvoke));
+                        .transformAndConcat(creatorRegistry::get)
+                        .toList();
+
+                for (final BeanCreator beanCreatorToInvoke : beanCreators) {
+                    addBeanByCreator(creatorRegistry, beanCreatorToInvoke);
+                }
             }
         }
     }
@@ -147,9 +157,11 @@ public class BeanContainer {
 
     private void initNoConstructorBeans() {
         final Map<String, Class> all = injector.getRegistered();
-        final Map<String, Class> registered = all.entrySet().stream()
+        final ImmutableList<Map.Entry<String, Class>> entries = FluentIterable.from(all.entrySet())
                 .filter(predicateNoConstruct())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .toList();
+
+        final Map<String, Class> registered = ImmutableMap.copyOf(entries);
 
         for (final String key : registered.keySet()) {
             final Object object = helper.createObject(registered.get(key));
@@ -184,7 +196,7 @@ public class BeanContainer {
         if (helper.isLocal(clazz)) {
             return (T) injector.inject(helper.createObject(clazz));
         } else {
-            return helper.findByType(beanList, clazz);
+            return helper.findOneByType(beanList, clazz);
         }
     }
 

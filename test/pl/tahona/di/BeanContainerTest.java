@@ -294,6 +294,9 @@ public class BeanContainerTest {
         assertEquals("spoko", root.test);
     }
 
+    static class TestTestBean extends TestBean {
+    }
+
     static class TestIheritance extends TestBean {
         @Wire
         AnnotationScopeLocalBean bean;
@@ -336,6 +339,28 @@ public class BeanContainerTest {
         assertNotNull(root.bean);
         assertNotNull(root.innerBean);
         assertEquals("spoko", root.bean.test);
+    }
+
+    @Test
+    public void shouldReturnBeansBasedOnClass() {
+        // g
+        final Injector injector = new Injector();
+        injector.register(SimpleBean.class);
+        injector.register(TestTestBean.class);
+        injector.register(TestBean.class);
+
+        final BeanContainer beanContainer = new BeanContainer(injector);
+        beanContainer.initialize();
+
+        // w
+        final TestTestBean testIheritance = beanContainer.getBean(TestTestBean.class);
+        final TestBean testBean = beanContainer.getBean(TestBean.class);
+
+        // t
+
+        assertNotNull(testBean);
+        assertNotNull(testIheritance);
+        assertFalse(testIheritance == testBean);
     }
 
     @Test
@@ -404,7 +429,6 @@ public class BeanContainerTest {
         injector.register(TestBean.class);
         injector.register(SimpleBean.class);
         injector.register("test", TestIheritance.class);
-        injector.register(TestBean.class);
 
         final BeanContainer beanContainer = new BeanContainer(injector);
         beanContainer.initialize();
@@ -414,8 +438,8 @@ public class BeanContainerTest {
 
         // t
         assertNotNull(root);
-        assertTrue(root.testBean instanceof TestIheritance);
-        assertFalse(root.testBeanWithoutWire instanceof TestIheritance);
+        assertTrue(root.testBean instanceof TestBean);
+        assertFalse(root.testBeanWithoutWire instanceof TestBean);
     }
 
     // 20.12.13 - 23ms before add conqurency

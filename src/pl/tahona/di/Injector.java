@@ -1,5 +1,7 @@
 package pl.tahona.di;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
 import pl.tahona.di.annotation.Wire;
 import pl.tahona.di.inject.InjectBeanException;
 import pl.tahona.di.inject.InjectDefinition;
@@ -38,7 +40,6 @@ public class Injector {
     public <T> T inject(final T bean) {
         final Class<? extends Object> rootClass = bean.getClass();
 
-
         injectBySelectedClass(bean, rootClass);
         return bean;
     }
@@ -56,10 +57,8 @@ public class Injector {
                 final Optional<InjectDefinition> optionalDef = getDefinition(declaredField);
 
                 if (optionalDef.isPresent()) {
-                    final String name = optionalDef.map(definition -> {
-                        final Annotation annotation = declaredField.getAnnotation(definition.getAnnotationType());
-                        return definition.getBeanName(annotation);
-                    }).orElse("");
+                    final InjectDefinition definition = optionalDef.get();
+                    final String name = getDefinitionName(declaredField, definition).or("");
 
                     if (!name.isEmpty()) {
                         injectField(bean, declaredField, name);
@@ -77,10 +76,15 @@ public class Injector {
         }
     }
 
+    private Optional<String> getDefinitionName(final Field declaredField, final InjectDefinition definition) {
+        final Annotation annotation = declaredField.getAnnotation(definition.getAnnotationType());
+        return Optional.fromNullable(definition.getBeanName(annotation));
+    }
+
     private Optional<InjectDefinition> getDefinition(final Field propertyType) {
-        return this.annotationSet.stream()
+        return FluentIterable.from(this.annotationSet)
                 .filter(x -> propertyType.getAnnotation(x.getAnnotationType()) != null)
-                .findFirst();
+                .first();
     }
 
     private <T> void injectField(final T bean, final Field field, final String beanName) {
@@ -141,6 +145,8 @@ public class Injector {
     }
 
     public void registerAll(final Map<String, Class> classes) {
-        classes.forEach(this::register);
+        for (final Map.Entry<String, Class> entry : classes.entrySet()) {
+            register(entry.getKey(), entry.getValue());
+        }
     }
 }

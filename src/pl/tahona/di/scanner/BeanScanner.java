@@ -1,12 +1,13 @@
 package pl.tahona.di.scanner;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.FluentIterable;
 import pl.tahona.di.annotation.Bean;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class BeanScanner {
 
@@ -29,14 +30,14 @@ public class BeanScanner {
             list.addAll(finder.findClasses(aPackage));
         }
 
-        return list.stream()
+        return FluentIterable.from(list)
                 .filter(this::isSupportedAnnotationExist)
-                .collect(Collectors.toMap(this::getName, x -> x));
+                .uniqueIndex(this::getName);
     }
 
     private boolean isSupportedAnnotationExist(final Class aClass) {
-        return definitions.stream()
-                .map(def -> aClass.getAnnotation(def.getAnnotation()))
+        return FluentIterable.from(definitions)
+                .transform(def -> aClass.getAnnotation(def.getAnnotation()))
                 .anyMatch(this::isNotNull);
     }
 
@@ -45,11 +46,14 @@ public class BeanScanner {
     }
 
     private String getName(final Class aClass) {
-        final ScannerDefinition definition = definitions.stream()
+
+        final ScannerDefinition definition = FluentIterable.from(definitions)
                 .filter(def -> aClass.getAnnotation(def.getAnnotation()) != null)
                 .filter(this::isNotNull)
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
+                .first()
+                .orNull();
+
+        Preconditions.checkNotNull(definition, "Definition cannot be null");
 
         final String beanName = definition.getBeanName(aClass.getAnnotation(definition.getAnnotation()));
 
